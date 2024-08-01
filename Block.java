@@ -1,11 +1,13 @@
-import java.util.Date;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 public class Block{
     public String hash;
     public String previous;
-    private String data;
-    private long timeStamp;
+    private final String data;
+    private final long timeStamp;
     private int count;
 
     public Block(String data, String previous){
@@ -32,7 +34,7 @@ public class Block{
         try{
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(plain.getBytes("UTF-8"));
-            StringBuffer hexString = new StringBuffer();
+            StringBuilder hexString = new StringBuilder();
             for(int i = 0; i < hash.length; i++){
                 String hex = Integer.toHexString(0xff & hash[i]);
                 if(hex.length() == 1)
@@ -40,7 +42,7 @@ public class Block{
                 hexString.append(hex);
             }
             return hexString.toString();
-        } catch (Exception e){
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e){
             throw new RuntimeException(e);
         }
     }

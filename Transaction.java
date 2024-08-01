@@ -10,8 +10,8 @@ public class Transaction{
     public float val;
     public byte[] signature;
     
-    public ArrayList<TransactionInput> inputs = new ArrayList<TransactionInput>();
-    public ArrayList<TransactionOutput> outputs = new ArrayList<TransactionOutput>();
+    public ArrayList<TransactionInput> inputs = new ArrayList<>();
+    public ArrayList<TransactionOutput> outputs = new ArrayList<>();
 
     private static int sequence = 0;
 
@@ -33,47 +33,118 @@ public class Transaction{
 
     public void generateSignature(PrivateKey privateKey){
         String data = getStringFromKey(senderKey) + getStringFromKey(receiverKey) + Float.toString(val);
-        this.signature = ECDSASigUtils.applyECDSASig(privateKey, data);
+        this.signature = DSASigUtils.applyDSASig(privateKey, data);
     }
 
     public boolean verifySignature(){
         String data = getStringFromKey(senderKey) + getStringFromKey(receiverKey) + Float.toString(val);
-        return ECDSASigUtils.verifyECDSASig(senderKey, data, signature);
+        return DSASigUtils.verifyDSASig(senderKey, data, signature);
+    }
+
+    public boolean processTransaction(){
+        if(!verifySignature()){
+            System.out.println("Invalid Signature");
+            return false;
+        }
+
+        for(TransactionInput input : inputs){
+            input.UTXO = Jackchain.UTXOs.get(input.transactionOutputId);
+        }
+
+        float inputsValue = getInputsValue();
+
+        if(inputsValue < Jackchain.MINIMUM_TRANSACTION){
+            System.out.println("Transaction inputs too small. Currently " + inputsValue + ". Needs to be at least " + Jackchain.MINIMUM_TRANSACTION);
+            return false;
+        }
+
+        this.id = calculateHash();
+        outputs.add(new TransactionOutput(this.receiverKey, val, id));
+        outputs.add(new TransactionOutput(this.senderKey, inputsValue - val, id));
+
+        for(TransactionOutput output : outputs){
+            Jackchain.UTXOs.put(output.id, output);
+        }
+
+        for(TransactionInput input :  inputs){
+            if(input.UTXO == null)
+                continue;
+            Jackchain.UTXOs.remove(input.UTXO.id);
+        }
+
+        return true;
+    }
+
+    public float getInputsValue(){
+        float total = 0.0f;
+        for(TransactionInput input : inputs){
+            if(input.UTXO == null)
+                continue;
+            total += input.UTXO.val;
+        }
+        return total;
+    }
+
+    public float getOutputsValue(){
+        float total = 0.0f;
+        for(TransactionOutput output : outputs){
+            total += output.val;
+        }
+        return total;
     }
 }
 
 class TransactionInput{
+    public String transactionOutputId;
+    public TransactionOutput UTXO;
 
+    public TransactionInput(String transactionOutputId){
+        this.transactionOutputId = transactionOutputId;
+    }
 }
 
 class TransactionOutput{
+    public String id;
+    public PublicKey receiver;
+    public float val;
+    public String parentTransactionId;
 
+    public TransactionOutput(PublicKey receiver, float val, String parentTransactionId){
+        this.receiver = receiver;
+        this.val = val;
+        this.parentTransactionId = parentTransactionId;
+        this.id = Block.encryptSha(Transaction.getStringFromKey(receiver) + Float.toString(val) + parentTransactionId);
+    }
+
+    public boolean isOwner(PublicKey key){
+        return key == receiver;
+    }
 }
 
-class ECDSASigUtils{
-    public static byte[] applyECDSASig(PrivateKey privateKey, String input){
+class DSASigUtils{
+    public static byte[] applyDSASig(PrivateKey privateKey, String input){
         Signature dsa;
         byte[] output = new byte[0];
         try{
-            dsa = Signature.getInstance("ECDSA", "BC");
+            dsa = Signature.getInstance("DSA");
             dsa.initSign(privateKey);
             byte[] strByte = input.getBytes();
             dsa.update(strByte);
             byte[] realSig = dsa.sign();
             output = realSig;
-        } catch(Exception e){
+        } catch(InvalidKeyException | NoSuchAlgorithmException | SignatureException e){
             throw new RuntimeException(e);
         }
         return output;
     }
 
-    public static boolean verifyECDSASig(PublicKey publicKey, String data, byte[] signature){
+    public static boolean verifyDSASig(PublicKey publicKey, String data, byte[] signature){
         try{
-            Signature ecdsaVerify = Signature.getInstance("ECDSA", "BS");
-            ecdsaVerify.initVerify(publicKey);
-            ecdsaVerify.update(data.getBytes());
-            return ecdsaVerify.verify(signature);
-        } catch(Exception e){
+            Signature dsaVerify = Signature.getInstance("DSA");
+            dsaVerify.initVerify(publicKey);
+            dsaVerify.update(data.getBytes());
+            return dsaVerify.verify(signature);
+        } catch(InvalidKeyException | NoSuchAlgorithmException | SignatureException e){
             throw new RuntimeException(e);
         }
     }

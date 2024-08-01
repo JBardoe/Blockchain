@@ -1,30 +1,34 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Jackchain{
 
-    public static ArrayList<Block> chain = new ArrayList<Block>();
-    public static int diff = 5;
+    public static ArrayList<Block> chain = new ArrayList<>();
+    public static HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
+    public static final int DIFF = 3;
+    public static final float MINIMUM_TRANSACTION = 0.1f;
+    public static Wallet wallet1;
+    public static Wallet wallet2;
+
     public static void main(String[] args){
-        chain.add(new Block("First Block", "0"));
-        System.out.println("Mining Block 1 ...");
-        chain.get(0).mineBlock(diff);
 
-        chain.add(new Block("Second Block", chain.get(0).hash));
-        System.out.println("Mining Block 2 ...");
-        chain.get(1).mineBlock(diff);
+        wallet1 = new Wallet();
+        wallet2 = new Wallet();
 
-        chain.add(new Block("Third Block", chain.get(1).hash));
-        System.out.println("Mining Block 3 ...");
-        chain.get(2).mineBlock(diff);
+        System.out.println("Private and public keys:");
+        System.out.println(Transaction.getStringFromKey(wallet1.privateKey));
+        System.out.println(Transaction.getStringFromKey(wallet1.publicKey));
 
+        Transaction transaction = new Transaction(wallet1.publicKey, wallet2.publicKey, DIFF, null);
+        transaction.generateSignature(wallet1.privateKey);
 
-        System.out.println("\nChain is Valid: " + isValidChain());
+        System.out.println("Signature valid: " + transaction.verifySignature());
     }
 
     public static Boolean isValidChain(){
         Block current;
         Block previous;
-        String target = new String(new char[diff]).replace('\0', '0');
+        String target = new String(new char[DIFF]).replace('\0', '0');
 
         for(int i = 1; i < chain.size(); i++){
             current = chain.get(i);
@@ -40,7 +44,7 @@ public class Jackchain{
                 return false;
             }
 
-            if(!current.hash.substring(0, diff).equals(target)){
+            if(!current.hash.substring(0, DIFF).equals(target)){
                 System.out.println("This block has not been mined");
                 return false;
             }

@@ -1,7 +1,7 @@
-import java.security.*;
-import java.security.spec.*;
 
-public class Wallet{
+import java.security.*;
+
+public final class Wallet{
     public PrivateKey privateKey;
     public PublicKey publicKey;
 
@@ -11,16 +11,15 @@ public class Wallet{
 
     public void generateKeyPair(){
         try{
-            KeyPairGenerator gen = KeyPairGenerator.getInstance("ECDSA", "BC");
+            KeyPairGenerator gen = KeyPairGenerator.getInstance("DSA");
             SecureRandom rand = SecureRandom.getInstance("SHA1PRNG");
-            ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
 
-            gen.initialize(ecSpec, rand);
+            gen.initialize(1024, rand);
             KeyPair keyPair = gen.generateKeyPair();
 
             this.privateKey = keyPair.getPrivate();
             this.publicKey = keyPair.getPublic();
-        } catch(Exception e){
+        } catch(NoSuchAlgorithmException e){
             throw new RuntimeException(e);
         }
     }
