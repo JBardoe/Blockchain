@@ -7,10 +7,10 @@ import java.util.Map;
  * Represents a user's wallet with their keys and transactions.
  */
 public final class Wallet{
-    private PrivateKey privateKey;
-    private PublicKey publicKey;
+    private PrivateKey privateKey; //Wallet's private key
+    private PublicKey publicKey; //Wallet's public key
 
-    private final HashMap<String, TransactionOutput> UTXOs = new HashMap<>();
+    private final HashMap<String, TransactionOutput> UTXOs = new HashMap<>(); //Wallet's unspent transaction outputs
 
     /**
      * Default constructor for a new wallet that automatically generate the public and private keys.

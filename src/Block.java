@@ -15,7 +15,10 @@ public final class Block{
     private final long timeStamp; //Time the block is created
     private int count; //A sequentially increased number used to make the hash of the block match the chain's difficulty requiremnet
 
-    //Constructor for a new block using the hash of the previous block
+    /**
+     * Constructor for a new block 
+     * @param previous Hash of the previous block
+     */
     public Block(String previous){
         this.previous = previous;
         this.timeStamp = new Date().getTime();
