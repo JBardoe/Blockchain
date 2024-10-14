@@ -4,14 +4,14 @@ import java.util.Base64;
 
 public class Transaction{
     
-    public String id;
-    public PublicKey senderKey;
-    public PublicKey receiverKey;
-    public float val;
-    public byte[] signature;
+    private String id;
+    private final PublicKey senderKey;
+    private final PublicKey receiverKey;
+    private final float val;
+    private byte[] signature;
     
-    public ArrayList<TransactionInput> inputs = new ArrayList<>();
-    public ArrayList<TransactionOutput> outputs = new ArrayList<>();
+    private ArrayList<TransactionInput> inputs = new ArrayList<>();
+    private final ArrayList<TransactionOutput> outputs = new ArrayList<>();
 
     private static int sequence = 0;
 
@@ -92,11 +92,16 @@ public class Transaction{
         }
         return total;
     }
+
+    protected ArrayList<TransactionInput> getInputs(){return this.inputs;}
+    protected ArrayList<TransactionOutput> getOutputs(){return this.outputs;}
+    public String getID(){return this.id;}
+    public PublicKey getReceiverKey(){return this.receiverKey;}
 }
 
 class TransactionInput{
-    public String transactionOutputId;
-    public TransactionOutput UTXO;
+    protected String transactionOutputId;
+    protected TransactionOutput UTXO;
 
     public TransactionInput(String transactionOutputId){
         this.transactionOutputId = transactionOutputId;
@@ -104,10 +109,10 @@ class TransactionInput{
 }
 
 class TransactionOutput{
-    public String id;
-    public PublicKey receiver;
-    public float val;
-    public String parentTransactionId;
+    protected String id;
+    protected PublicKey receiver;
+    protected float val;
+    protected String parentTransactionId;
 
     public TransactionOutput(PublicKey receiver, float val, String parentTransactionId){
         this.receiver = receiver;
